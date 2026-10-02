@@ -10,16 +10,16 @@ workflows:
     scripts:
       - name: Recreate folders
         script: |
-          if [ ! -d "ios" ]; then
-            flutter create --platforms=ios . --project-name rdc_services
-          fi
-          if [ ! -d "android" ]; then
-            flutter create --platforms=android . --project-name rdc_services
-          fi
+          flutter create . --platforms=ios,android --project-name rdc_services
+          ls ios/
       - name: Get packages
         script: |
           flutter pub get
-          cd ios && pod install && cd ..
+          if [ -f "ios/Podfile" ]; then
+            cd ios && pod install && cd ..
+          else
+            echo "Podfile not found, skipping pod install"
+          fi
       - name: Build IPA no signing
         script: |
           flutter build ios --release --no-codesign
@@ -27,5 +27,6 @@ workflows:
           mkdir Payload
           cp -r Runner.app Payload
           zip -r app-release.ipa Payload
+          ls -lh
     artifacts:
       - build/ios/iphoneos/*.ipa
