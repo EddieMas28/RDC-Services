@@ -1,24 +1,31 @@
 workflows:
-  flutter-apk:
-    name: RDC-Services APK
+  flutter-ios:
+    name: RDC-Services iOS
     instance_type: mac_mini_m2
     max_build_duration: 60
     environment:
       flutter: stable
-      java: 17
+      xcode: latest
+      cocoapods: default
     scripts:
-      - name: Recreate missing android folder
+      - name: Recreate folders
         script: |
+          if [ ! -d "ios" ]; then
+            flutter create --platforms=ios . --project-name rdc_services
+          fi
           if [ ! -d "android" ]; then
-            echo "Android folder missing, recreating project..."
             flutter create --platforms=android . --project-name rdc_services
           fi
-          ls -la
       - name: Get packages
         script: |
           flutter pub get
-      - name: Build APK
+          cd ios && pod install && cd ..
+      - name: Build IPA no signing
         script: |
-          flutter build apk --release
+          flutter build ios --release --no-codesign
+          cd build/ios/iphoneos
+          mkdir Payload
+          cp -r Runner.app Payload
+          zip -r app-release.ipa Payload
     artifacts:
-      - build/app/outputs/flutter-apk/*.apk
+      - build/ios/iphoneos/*.ipa
